@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>グラブル9マスパズル</title>
+  <title>9マスパズル</title>
   <style>
     body {
       display: flex;
@@ -25,7 +25,7 @@
       max-height: 400px;
     }
     .tile {
-      background-image: url('puzzle.jpg');
+      background-image: url('image/puzzle.jpg');
       background-size: 300% 300%;
       transition: transform 0.3s ease;
       cursor: pointer;
@@ -39,13 +39,27 @@
       background-color: #f0f0f0;
       cursor: default;
     }
+    .completed {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90vmin;
+      height: 90vmin;
+      max-width: 400px;
+      max-height: 400px;
+      display: none;
+      z-index: 10;
+    }
   </style>
 </head>
 <body>
   <div class="puzzle-container" id="puzzle"></div>
+  <img src="image/puzzle.jpg" id="completedImage" class="completed">
 
   <script>
     const puzzleContainer = document.getElementById('puzzle');
+    const completedImage = document.getElementById('completedImage');
     let tiles = [1, 2, 3, 4, 5, 6, 7, 8, null];
 
     // シャッフルが解けるパズルか確認
@@ -126,11 +140,14 @@
       }, 300);
     }
 
-    // クリア判定の修正
+    // クリア判定と完成画像表示
     function checkWin() {
       const isSolved = tiles.slice(0, 8).every((tile, index) => tile === index + 1) && tiles[8] === null;
       if (isSolved) {
-        setTimeout(() => alert('おめでとう！パズル完成！'), 100);
+        setTimeout(() => {
+          completedImage.style.display = 'block';
+          setTimeout(() => alert('おめでとう！パズル完成！'), 100);
+        }, 300);
       }
     }
 

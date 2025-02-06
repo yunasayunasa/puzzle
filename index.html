@@ -26,7 +26,7 @@
       position: relative;
     }
     .tile {
-      background-image: url('image.gif');
+      background-image: url('puzzle.gif');
       background-size: 300% 300%;
       transition: transform 0.3s ease;
       cursor: pointer;
@@ -54,7 +54,7 @@
 </head>
 <body>
   <div class="puzzle-container" id="puzzle">
-    <img src="image.gif?v=2" id="completedImage" class="completed">
+    <img src="puzzle.gif?v=3" id="completedImage" class="completed">
   </div>
 
   <script>
@@ -146,7 +146,7 @@
       const isSolved = tiles.slice(0, 8).every((tile, index) => tile === index + 1) && tiles[8] === null;
       if (isSolved) {
         setTimeout(() => {
-          completedImage.src = 'image.gif?v=2';  // 完成時にGIFを指定
+          completedImage.src = 'puzzle.gif?v=3';  // 完成時にGIFを指定
           completedImage.style.display = 'block';
           alert('おめでとう！パズル完成！');
         }, 300);

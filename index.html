@@ -23,6 +23,7 @@
       height: 90vmin;
       max-width: 400px;
       max-height: 400px;
+      position: relative;
     }
     .tile {
       background-image: url('image/puzzle.jpg');
@@ -40,22 +41,21 @@
       cursor: default;
     }
     .completed {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 90vmin;
-      height: 90vmin;
-      max-width: 400px;
-      max-height: 400px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       display: none;
-      z-index: 10;
+      z-index: 100;
+      border: 5px solid #fff;
     }
   </style>
 </head>
 <body>
-  <div class="puzzle-container" id="puzzle"></div>
-  <img src="image/puzzle.jpg" id="completedImage" class="completed">
+  <div class="puzzle-container" id="puzzle">
+    <img src="image/puzzle.jpg?version=1" id="completedImage" class="completed">
+  </div>
 
   <script>
     const puzzleContainer = document.getElementById('puzzle');
@@ -102,6 +102,7 @@
         }
         puzzleContainer.appendChild(tileElement);
       });
+      puzzleContainer.appendChild(completedImage); // 完成画像を常に配置
     }
 
     // タイルの移動
@@ -146,7 +147,7 @@
       if (isSolved) {
         setTimeout(() => {
           completedImage.style.display = 'block';
-          setTimeout(() => alert('おめでとう！パズル完成！'), 100);
+          alert('おめでとう！パズル完成！');
         }, 300);
       }
     }

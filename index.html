@@ -431,6 +431,36 @@
         overlay.classList.remove('shine');
       }, 3000);
     }
+    // グローバル変数に追加
+let isCompleted = false;
+
+// showCompletionOverlay を修正
+function showCompletionOverlay() {
+  if (isCompleted) return;
+  isCompleted = true;
+  document.getElementById('completed-image').src = selectedImage;
+  const overlay = document.getElementById('completion-overlay');
+  overlay.style.display = 'flex';
+  overlay.classList.add('shine');
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    overlay.classList.remove('shine');
+  }, 3000);
+}
+
+// startPuzzle を修正
+function startPuzzle(image, size) {
+  isCompleted = false;
+  tiles = [];
+  const total = size * size;
+  for (let i = 0; i < total - 1; i++) {
+    tiles.push(i);
+  }
+  tiles.push(null);
+  shuffle(tiles);
+  initTileElements();
+  updateTilePositions();
+}
   </script>
 </body>
 </html>

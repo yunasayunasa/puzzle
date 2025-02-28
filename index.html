@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GRANBLUE SQUARE PUZZLE</title>
+  <!-- 8bit調のピクセルフォント -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    /* グローバル設定（8bit風ピクセルフォント） */
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      font-family: 'Press Start 2P', monospace;
+      background-color: #222;
+      color: #fff;
+      overflow: hidden;
+    }
+    /* 各画面共通のレイアウト */
+    .screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+    /* タイトル画面 */
+    #title-screen {
+      display: flex;
+      background-color: #0000FF;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    /* タイトルロゴ */
+    #title-logo {
+      font-size: 2rem;
+      color: #fff;
+      margin-bottom: 20px;
+      text-align: center;
+      padding: 0 20px;
+    }
+    /* スタートメッセージ */
+    #start-text {
+      background: rgba(255, 0, 0, 0.8);
+      padding: 10px 20px;
+      border: 2px solid #000;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      animation: blink 1s infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    /* 絵柄選択画面 */
+    .image-selection, .difficulty-selection {
+      display: flex;
+      gap: 20px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .image-selection img, .difficulty-selection button {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border: 2px solid #000;
+      cursor: pointer;
+      transition: border 0.3s, transform 0.2s;
+      background-color: #555;
+    }
+    .image-selection img:hover, .difficulty-selection button:hover {
+      border-color: #007BFF;
+      transform: scale(1.05);
+    }
+    .difficulty-selection button {
+      background-color: #007BFF;
+      color: #fff;
+      font-size: 1rem;
+      border-radius: 5px;
+      padding: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    /* パズル画面 */
+    #puzzle-screen {
+      background: #222;
+      padding: 20px;
+    }
+    /* パズルコンテナ（タイル配置領域） */
+    #puzzle-container {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      border: 2px solid #000;
+      margin-bottom: 20px;
+    }
+    /* タイル（絶対配置・滑らかな移動アニメーション） */
+    .tile {
+      position: absolute;
+      transition: transform 0.3s ease;
+      border: 2px solid #000;
+      box-sizing: border-box;
+      background-color: #007BFF;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      user-select: none;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    /* ボタン（8bit風） */
+    button {
+      font-family: 'Press Start 2P', monospace;
+      border: 2px solid #000;
+      background-color: #f8f8f8;
+      color: #000;
+      padding: 10px 20px;
+      cursor: pointer;
+      margin: 5px;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #e0e0e0;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+    /* 完成時のオーバーレイ（祝福エフェクト＋完成絵表示） */
+    #completion-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.2);
+      pointer-events: none;
+      z-index: 10;
+    }
+    /* 光のエフェクトアニメーション */
+    #completion-overlay.shine {
+      animation: shineEffect 1s ease-out;
+    }
+    @keyframes shineEffect {
+      0% { background: rgba(255, 255, 255, 0); }
+      50% { background: rgba(255, 255, 255, 0.5); }
+      100% { background: rgba(255, 255, 255, 0.2); }
+    }
+    /* 完成絵 */
+    #completed-image {
+      max-width: 80%;
+      max-height: 80%;
+      border: 2px solid #000;
+      margin-top: 20px;
+      animation: popIn 0.5s ease-out;
+    }
+    @keyframes popIn {
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    /* レスポンシブデザイン */
+    @media (max-width: 768px) {
+      #title-logo {
+        font-size: 1.5rem;
+      }
+      .difficulty-selection button,
+      .image-selection img {
+        width: 80px;
+        height: 80px;
+      }
+      button {
+        padding: 8px 16px;
+        font-size: 0.8rem;
+      }
+    }
+    @media (max-width: 480px) {
+      #title-logo {
+        font-size: 1.2rem;
+      }
+      .difficulty-selection button,
+      .image-selection img {
+        width: 60px;
+        height: 60px;
+      }
+      #puzzle-container {
+        width: 280px;
+        height: 280px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- タイトル画面 -->
+  <div id="title-screen" class="screen">
+    <div id="title-logo">GRANBLUE SQUARE PUZZLE</div>
+    <div id="start-text">画面をタップしてスタート！</div>
+  </div>
+
+  <!-- 絵柄選択画面 -->
+  <div id="image-selection-screen" class="screen">
+    <h1>絵柄を選んでください</h1>
+    <div class="image-selection">
+      <!-- サンプル画像URLs - インターネット上の画像を使用 -->
+      <img src="puzzle1.jpg" alt="Puzzle 1" data-image="puzzle1.jpg">
+      <img src="puzzle2.jpg" alt="Puzzle 2" data-image="puzzle2.jpg">
+      <img src="puzzle3.jpg" alt="Puzzle 3" data-image="puzzle3.jpg">
+    </div>
+  </div>
+
+  <!-- 難易度選択画面 -->
+  <div id="difficulty-selection-screen" class="screen">
+    <h1>難易度を選んでください</h1>
+    <div class="difficulty-selection">
+      <button data-size="3">3x3</button>
+      <button data-size="4">4x4</button>
+      <button data-size="5">5x5</button>
+    </div>
+  </div>
+
+  <!-- パズル画面 -->
+  <div id="puzzle-screen" class="screen">
+    <div id="puzzle-container"></div>
+    <div class="controls">
+      <button id="hint-button">ヒント</button>
+      <button id="solve-button">自動解答</button>
+      <button id="reset-button">リセット</button>
+      <button id="back-button">タイトルに戻る</button>
+    </div>
+    <!-- 完成時オーバーレイ -->
+    <div id="completion-overlay">
+      <img id="completed-image" src="" alt="完成した絵">
+    </div>
+  </div>
+
+  <script>
+    // グローバル変数
+    let selectedImage = '';
+    let selectedSize = 3;
+    let tiles = [];
+    let tileElements = {};
+    let isCompleted = false;
+    let touchStart = null;
+
+    // 画面表示関数
+    function showScreen(screenId) {
+      // 全ての画面を非表示
+      document.querySelectorAll('.screen').forEach(screen => {
+        screen.style.display = 'none';
+      });
+      // 指定された画面を表示
+      document.getElementById(screenId).style.display = 'flex';
+    }
+
+    // タイトル画面 → 絵柄選択
+    document.getElementById('title-screen').addEventListener('click', () => {
+      showScreen('image-selection-screen');
+    });
+
+    // 絵柄選択 → 難易度選択
+    document.querySelectorAll('.image-selection img').forEach(img => {
+      img.addEventListener('click', (e) => {
+        selectedImage = e.target.getAttribute('data-image');
+        showScreen('difficulty-selection-screen');
+      });
+    });
+
+    // 難易度選択 → パズル開始
+    document.querySelectorAll('.difficulty-selection button').forEach(button => {
+      button.addEventListener('click', (e) => {
+        selectedSize = parseInt(e.target.getAttribute('data-size'));
+        showScreen('puzzle-screen');
+        startPuzzle(selectedImage, selectedSize);
+      });
+    });
+
+    // パズル開始時の初期化
+    function startPuzzle(image, size) {
+      // パズル開始時にisCompletedフラグをリセット
+      isCompleted = false;
+      tiles = [];
+      const total = size * size;
+      for (let i = 0; i < total - 1; i++) {
+        tiles.push(i);
+      }
+      tiles.push(null);
+      shuffle(tiles);
+      initTileElements();
+      updateTilePositions();
+      
+      // パズル開始時にオーバーレイを非表示にする
+      const overlay = document.getElementById('completion-overlay');
+      overlay.style.display = 'none';
+      overlay.classList.remove('shine');
+    }
+
+    // タイル要素の初期化
+    function initTileElements() {
+      const container = document.getElementById('puzzle-container');
+      container.innerHTML = '';
+      tileElements = {};
+      const total = selectedSize * selectedSize;
+      const cellSize = container.clientWidth / selectedSize;
+      for (let i = 0; i < total - 1; i++) {
+        const tileDiv = document.createElement('div');
+        tileDiv.classList.add('tile');
+        // 保存：正しい数字（1-indexed）を data-label として保持
+        tileDiv.dataset.label = i + 1;
+        // 初期状態では数字は表示しない
+        tileDiv.textContent = "";
+        // 背景画像設定：選択された画像を使用
+        tileDiv.style.backgroundImage = `url(${selectedImage})`;
+        tileDiv.style.backgroundSize = `${container.clientWidth}px ${container.clientHeight}px`;
+        // 各タイルの正しい位置に応じた背景位置の計算
+        const correctCol = i % selectedSize;
+        const correctRow = Math.floor(i / selectedSize);
+        tileDiv.style.backgroundPosition = `-${correctCol * cellSize}px -${correctRow * cellSize}px`;
+
+        tileDiv.addEventListener('click', () => {
+          const index = tiles.indexOf(i);
+          moveTile(index);
+        });
+        
+        // タッチイベントハンドラの追加（スワイプ対応）
+        tileDiv.addEventListener('touchstart', (e) => {
+          touchStart = {
+            x: e.touches[0].clientX,
+            y: e.touches[0].clientY
+          };
+        });
+        
+        tileDiv.addEventListener('touchend', (e) => {
+          if (!touchStart) return;
+          
+          const endX = e.changedTouches[0].clientX;
+          const endY = e.changedTouches[0].clientY;
+          
+          const dx = endX - touchStart.x;
+          const dy = endY - touchStart.y;
+          const threshold = 30; // スワイプを検出する閾値
+          
+          // スワイプ方向を決定
+          let direction = '';
+          if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > threshold) {
+            direction = dx > 0 ? 'right' : 'left';
+          } else if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > threshold) {
+            direction = dy > 0 ? 'down' : 'up';
+          }
+          
+          if (direction) {
+            const index = tiles.indexOf(i);
+            const emptyIndex = tiles.indexOf(null);
+            const neighbors = getNeighbors(emptyIndex);
+            
+            if (neighbors.includes(index)) {
+              moveTile(index);
+            }
+            
+            // スクロールを防止
+            e.preventDefault();
+          }
+          
+          // タッチ状態をリセット
+          touchStart = null;
+        });
+        
+        tileElements[i] = tileDiv;
+        container.appendChild(tileDiv);
+      }
+    }
+
+    // タイル位置更新（アニメーション付き）
+    function updateTilePositions() {
+      const container = document.getElementById('puzzle-container');
+      const cellSize = container.clientWidth / selectedSize;
+      for (let index = 0; index < tiles.length; index++) {
+        const tile = tiles[index];
+        const row = Math.floor(index / selectedSize);
+        const col = index % selectedSize;
+        const left = col * cellSize;
+        const top = row * cellSize;
+        if (tile !== null) {
+          const tileDiv = tileElements[tile];
+          tileDiv.style.width = cellSize + 'px';
+          tileDiv.style.height = cellSize + 'px';
+          tileDiv.style.transform = `translate(${left}px, ${top}px)`;
+        }
+      }
+    }
+
+    // タイル移動処理（隣接セルと入れ替え）
+    function moveTile(tileIndex) {
+      const emptyIndex = tiles.indexOf(null);
+      const neighbors = getNeighbors(emptyIndex);
+      if (neighbors.includes(tileIndex)) {
+        [tiles[tileIndex], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[tileIndex]];
+        updateTilePositions();
+        if (checkCompletion()) {
+          showCompletionOverlay();
+        }
+      }
+    }
+
+    // 隣接セルのインデックス取得
+    function getNeighbors(index) {
+      const neighbors = [];
+      const row = Math.floor(index / selectedSize);
+      const col = index % selectedSize;
+      if (row > 0) neighbors.push(index - selectedSize);
+      if (row < selectedSize - 1) neighbors.push(index + selectedSize);
+      if (col > 0) neighbors.push(index - 1);
+      if (col < selectedSize - 1) neighbors.push(index + 1);
+      return neighbors;
+    }
+
+    // 盤面完成チェック
+    function checkCompletion() {
+      if (tiles[tiles.length - 1] !== null) return false;
+      for (let i = 0; i < tiles.length - 1; i++) {
+        if (tiles[i] !== i) return false;
+      }
+      return true;
+    }
+
+    // シャッフル（解ける状態にする）
+    function shuffle(array) {
+      do {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+      } while (!isSolvable(array));
+    }
+
+    // 解けるか判定（反転数が偶数なら解ける）
+    function isSolvable(array) {
+      let inversions = 0;
+      for (let i = 0; i < array.length - 1; i++) {
+        for (let j = i + 1; j < array.length; j++) {
+          if (array[i] !== null && array[j] !== null && array[i] > array[j]) {
+            inversions++;
+          }
+        }
+      }
+      return inversions % 2 === 0;
+    }
+
+    // ヒント機能
+    document.getElementById('hint-button').addEventListener('click', () => {
+      // 数字を表示
+      for (const key in tileElements) {
+        tileElements[key].textContent = tileElements[key].dataset.label;
+      }
+      // 3秒後に数字を非表示にする
+      setTimeout(() => {
+        for (const key in tileElements) {
+          tileElements[key].textContent = "";
+        }
+      }, 3000);
+    });
+
+    // 自動解答：盤面を完成状態に
+    document.getElementById('solve-button').addEventListener('click', () => {
+      const total = selectedSize * selectedSize;
+      tiles = [];
+      for (let i = 0; i < total - 1; i++) {
+        tiles.push(i);
+      }
+      tiles.push(null);
+      updateTilePositions();
+      showCompletionOverlay();
+    });
+
+    // リセットボタン
+    document.getElementById('reset-button').addEventListener('click', () => {
+      startPuzzle(selectedImage, selectedSize);
+    });
+
+    // タイトルに戻るボタン
+    document.getElementById('back-button').addEventListener('click', () => {
+      showScreen('title-screen');
+    });
+
+    // 完成時の祝福エフェクト＋完成絵表示
+    function showCompletionOverlay() {
+      // すでに完成していたら何もしない（二重実行防止）
+      if (isCompleted) return;
+      
+      // 完成フラグをセット
+      isCompleted = true;
+      
+      // 完成時に、完成絵に選択された画像を設定
+      document.getElementById('completed-image').src = selectedImage;
+      const overlay = document.getElementById('completion-overlay');
+      overlay.style.display = 'flex';
+      overlay.classList.add('shine');
+      
+      // 3秒後にオーバーレイを非表示にする
+      setTimeout(() => {
+        overlay.style.display = 'none';
+        overlay.classList.remove('shine');
+      }, 3000);
+    }
+
+    // 初期画面表示
+    showScreen('title-screen');
+  </script>
+</body>
+</html>
